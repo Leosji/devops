@@ -1,0 +1,43 @@
+services:
+  nginx:
+    image: nginx:1.28-alpine
+    depends_on:
+      - php
+    ports:
+      - "80:80"
+    volumes:
+      - ./app:/var/www/html:ro
+      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - appnet
+
+  php:
+    build:
+      context: ./docker/php
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: poll_app
+      DB_USER: poll_user
+      DB_PASS: strong_password
+    volumes:
+      - ./app:/var/www/html:ro
+    networks:
+      - appnet
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: poll_app
+      POSTGRES_USER: poll_user
+      POSTGRES_PASSWORD: strong_password
+    volumes:
+      - pg:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+networks:
+  appnet:
+
+volumes:
+  pg:

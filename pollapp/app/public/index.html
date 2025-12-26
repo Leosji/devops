@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Опрос</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+    .card {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .error {
+      color: red;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Тестовый опрос</h1>
+
+  <div class="card">
+    <h2>Новая попытка</h2>
+    <div>
+      <label>
+        Имя пользователя:
+        <input type="text" id="username" />
+      </label>
+
+      <p>Вопрос 1: Столица Франции?</p>
+      <label><input type="radio" name="q1" value="Лондон" /> Лондон</label>
+      <label><input type="radio" name="q1" value="Париж" /> Париж</label>
+      <label><input type="radio" name="q1" value="Берлин" /> Берлин</label>
+
+      <p>Вопрос 2: 2 + 2 = ?</p>
+      <label><input type="radio" name="q2" value="3" /> 3</label>
+      <label><input type="radio" name="q2" value="4" /> 4</label>
+      <label><input type="radio" name="q2" value="5" /> 5</label>
+
+      <button id="submitBtn">Отправить ответы</button>
+      <div id="submitStatus" class="error"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>История последних попыток</h2>
+    <p><a href="/results.php">Открыть страницу с результатами</a></p>
+    <button id="loadHistoryBtn">Обновить историю</button>
+    <div id="history"></div>
+  </div>
+
+  <script>
+    function getSelected(name) {
+      const node = document.querySelector('input[name="' + name + '"]:checked');
+      return node ? node.value : null;
+    }
+
+    async function submitAnswers() {
+      const username = document.getElementById('username').value.trim();
+      const q1 = getSelected('q1');
+      const q2 = getSelected('q2');
+      const statusEl = document.getElementById('submitStatus');
+      statusEl.textContent = '';
+
+      if (!username || !q1 || !q2) {
+        statusEl.textContent = 'Заполните имя и выберите ответы на все вопросы.';
+        return;
+      }
+
+      // простая проверка, правильные ответы: Париж и 4
+      let score = 0;
+      if (q1 === 'Париж') score++;
+      if (q2 === '4') score++;
+
+      const payload = {
+        username,
+        score,
+        answers: { q1, q2 }
+      };
+
+      try {
+        const resp = await fetch('/api/submit.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          throw new Error(data.error || 'Ошибка при сохранении');
+        }
+        statusEl.style.color = 'green';
+        statusEl.textContent = 'Результат сохранён. Балл: ' + score + ' из 2.';
+        await loadHistory();
+      } catch (e) {
+        statusEl.style.color = 'red';
+        statusEl.textContent = 'Ошибка: ' + e.message;
+      }
+    }
+
+    async function loadHistory() {
+      const container = document.getElementById('history');
+      container.textContent = 'Загрузка...';
+      try {
+        const resp = await fetch('/api/history.php');
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          throw new Error(data.error || 'Ошибка при загрузке истории');
+        }
+        if (!data.items.length) {
+          container.textContent = 'Пока нет попыток.';
+          return;
+        }
+        let html = '<table><thead><tr>' +
+          '<th>ID</th><th>Пользователь</th><th>Балл</th><th>Дата</th>' +
+          '</tr></thead><tbody>';
+        data.items.forEach(row => {
+          html += '<tr>' +
+            '<td>' + row.id + '</td>' +
+            '<td>' + row.username + '</td>' +
+            '<td>' + row.score + '</td>' +
+            '<td>' + row.created_at + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.textContent = 'Ошибка: ' + e.message;
+      }
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', submitAnswers);
+    document.getElementById('loadHistoryBtn').addEventListener('click', loadHistory);
+
+    // подгружаем историю при открытии
+    loadHistory();
+  </script>
+</body>
+</html>
