@@ -3,9 +3,8 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 $dsn  = "pgsql:host=127.0.0.1;port=5432;dbname=poll_app";
-$user = "poll_user";          // те же, что в submit.php
-$pass = "123";
-
+$user = getenv('DB_USER') ?: 'poll_user';
+$pass = getenv('DB_PASS') ?: '';
 try {
     $pdo = new PDO(
         $dsn,
