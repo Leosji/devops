@@ -2,7 +2,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$dsn  = "pgsql:host=127.0.0.1;port=5432;dbname=poll_app";
+$dsn = "pgsql:host=$host;port=$port;dbname=$db";
 $user = getenv('DB_USER') ?: 'poll_user';
 $pass = getenv('DB_PASS') ?: '';
 try {
