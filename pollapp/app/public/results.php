@@ -56,7 +56,6 @@ try {
           <th>ID</th>
           <th>Пользователь</th>
           <th>Балл</th>
-          <th>Ответы</th>
           <th>Дата</th>
         </tr>
       </thead>
@@ -66,7 +65,6 @@ try {
           <td><?= htmlspecialchars($row['id']) ?></td>
           <td><?= htmlspecialchars($row['username']) ?></td>
           <td><?= htmlspecialchars($row['score']) ?></td>
-          <td><pre><?= htmlspecialchars(json_encode($row['answers'], JSON_UNESCAPED_UNICODE), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></pre></td>
           <td><?= htmlspecialchars($row['created_at']) ?></td>
         </tr>
       <?php endforeach; ?>
